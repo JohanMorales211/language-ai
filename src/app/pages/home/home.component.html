@@ -15,25 +15,47 @@
                 >
                   Traduce lo que quieras con LinguaAI
                 </h1>
+                <h2 class="text-white text-xs sm:text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
+                  Este proyecto es una demostración de las capacidades de traducción y comprensión de idiomas de la IA, utilizando un modelo de lenguaje avanzado para ofrecer traducciones precisas y contextuales.
+                </h2>
               </div>
 
               <div class="w-full max-w-full lg:max-w-3xl flex flex-col items-center gap-4 sm:gap-6">
-                <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 @[768px]:gap-6">
-                  <div class="flex flex-col">
-                    <label for="inputText" class="text-[#ccc68e] text-sm mb-1 self-start">Detectar Idioma</label>
+                <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 @[768px]:gap-6 items-start">
+                  <div class="flex flex-col gap-2">
+                    <select
+                      id="sourceLanguage"
+                      name="sourceLanguage"
+                      class="form-select block w-full rounded-md border-[#6a642f] bg-[#353218] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 px-3 text-sm appearance-none"
+                    >
+                      <option value="detect">Detectar Idioma</option>
+                      <option value="es">Español</option>
+                      <option value="en">Inglés</option>
+                      <option value="fr">Francés</option>
+                      <option value="pt">Portugués</option>
+                    </select>
                     <textarea
                       id="inputText"
-                      rows="4"
+                      rows="5"
                       placeholder="Escribe o pega texto aquí..."
                       class="form-textarea w-full flex-1 resize-none rounded-xl text-white focus:outline-0 focus:ring-2 focus:ring-[#f8e006] border border-[#6a642f] bg-[#353218] p-3 placeholder:text-[#ccc68e] text-sm @[480px]:text-base"
                     ></textarea>
                   </div>
 
-                  <div class="flex flex-col">
-                    <label for="outputText" class="text-[#ccc68e] text-sm mb-1 self-start">Inglés</label>
+                  <div class="flex flex-col gap-2">
+                    <select
+                      id="targetLanguage"
+                      name="targetLanguage"
+                      class="form-select block w-full rounded-md border-[#6a642f] bg-[#2c2a14] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 px-3 text-sm appearance-none"
+                    >
+                      <option value="en">Inglés</option>
+                      <option value="es">Español</option>
+                      <option value="fr">Francés</option>
+                      <option value="pt">Portugués</option>
+                    </select>
                     <textarea
                       id="outputText"
-                      rows="4"
+                      rows="5"
                       placeholder="Traducción..."
                       readonly
                       class="form-textarea w-full flex-1 resize-none rounded-xl text-white focus:outline-0 border border-[#6a642f] bg-[#2c2a14] p-3 placeholder:text-[#ccc68e] text-sm @[480px]:text-base"
@@ -54,7 +76,7 @@
               Aprendizaje de Idiomas Impulsado por IA
             </h1>
             <p class="text-white text-sm sm:text-base font-normal leading-normal max-w-full sm:max-w-[720px]">
-              LinguaAI utiliza IA de vanguardia para proporcionar traducciones precisas, definiciones concisas y ejemplos de uso contextual, mejorando tu viaje de aprendizaje de idiomas.
+              LinguaAI es creado por Johan Morales.
             </p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 p-0">
