@@ -12,10 +12,10 @@
               <div class="flex flex-col gap-2 text-center mb-4 sm:mb-6">
                 <h1
                   class="text-white text-3xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em]">
-                  Traduce con LinguageAI
+                  Traduce lo que quieras con LinguAI
                 </h1>
                 <h2 class="text-white text-xs sm:text-sm lg:text-base font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
-                  Traduce en tiempo real, obtén recomendaciones y aprende.
+                  Traduce en tiempo real, explora alternativas y aprende.
                 </h2>
               </div>
 
@@ -42,11 +42,16 @@
                         name="targetLanguage"
                         [(ngModel)]="targetLanguage"
                         (ngModelChange)="onTargetLanguageChanged()"
-                        class="form-select block w-full rounded-md border-[#6a642f] bg-[#2c2a14] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 pl-3 pr-10 text-sm sm:text-base lg:text-lg appearance-none">
-                        <option value="en">Inglés</option>
-                        <option value="es">Español</option>
-                        <option value="fr">Francés</option>
-                        <option value="pt">Portugués</option>
+                        class="form-select block w-full rounded-md border-[#6a642f] bg-[#2c2a14] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 pl-3 pr-10 text-sm sm:text-base lg:text-lg appearance-none"
+                        [disabled]="isLoading || availableTargetLanguages.length === 0">
+                        <ng-container *ngIf="availableTargetLanguages.length > 0; else noTargetOptions">
+                          <option *ngFor="let lang of availableTargetLanguages" [value]="lang.code">
+                            {{ lang.name }}
+                          </option>
+                        </ng-container>
+                        <ng-template #noTargetOptions>
+                          <option value="" disabled selected>-- Elige un idioma --</option>
+                        </ng-template>
                       </select>
                       <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#ccc68e]">
                         <svg class="fill-current h-4 w-4 lg:h-5 lg:w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -57,7 +62,7 @@
                     <textarea
                       id="outputText"
                       rows="5"
-                      placeholder="Traducción..."
+                      placeholder="Traducción principal..."
                       [value]="outputText"
                       readonly
                       class="form-textarea w-full flex-1 resize-none rounded-xl text-white focus:outline-0 border border-[#6a642f] bg-[#2c2a14] p-3 placeholder:text-[#ccc68e] text-sm sm:text-base lg:text-lg"
@@ -72,15 +77,30 @@
                   </svg>
                   <span class="lg:text-lg">Traduciendo...</span>
                 </div>
-                <div *ngIf="!isLoading" class="mt-4 h-12"></div>
+                <div *ngIf="!isLoading" class="mt-2 h-12"></div>
 
-
-                <div *ngIf="outputText && recommendationsOutput && !isLoading" class="w-full mt-6">
-                   <h3 class="text-lg lg:text-xl font-semibold text-white mb-2">Recomendaciones y Contexto:</h3>
-                   <div class="p-4 rounded-lg border border-[#6a642f] bg-[#2c2a14] text-[#ccc68e] min-h-[80px] text-sm sm:text-base lg:text-lg whitespace-pre-line">
-                     {{ recommendationsOutput }}
+                <div *ngIf="outputText && dictionaryEntries.length > 0 && !isLoading" class="w-full mt-4">
+                   <h3 class="text-lg lg:text-xl font-semibold text-white mb-3">Diccionario: Uso y Alternativas</h3>
+                   <div class="space-y-4">
+                     <div *ngFor="let entry of dictionaryEntries; let i = index" class="p-4 rounded-lg border border-[#6a642f] bg-[#2c2a14]">
+                       <h4 class="text-[#f8e006] font-semibold text-md lg:text-lg mb-1">
+                         <span *ngIf="i === 0 && entry.alternative_in_target_lang === outputText" class="text-amber-300">(Traducción Principal): </span>
+                         <span *ngIf="i > 0 || (i === 0 && entry.alternative_in_target_lang !== outputText)">{{ i + 1 }}. </span>
+                         {{ entry.alternative_in_target_lang }}
+                       </h4>
+                       <div *ngIf="entry.example_original_lang && entry.example_target_lang" class="text-sm lg:text-base">
+                         <p class="text-[#ccc68e] italic mt-1">Ej. ({{ getLanguageName(detectedSourceLanguageCode) }}): {{ entry.example_original_lang }}</p>
+                         <p class="text-white">Ej. ({{ getLanguageName(targetLanguage) }}): {{ entry.example_target_lang }}</p>
+                       </div>
+                       <div *ngIf="!(entry.example_original_lang && entry.example_target_lang) && entry.alternative_in_target_lang" class="text-sm text-[#ccc68e] italic mt-1">
+                         (No hay ejemplos detallados para esta entrada)
+                       </div>
+                     </div>
                    </div>
                 </div>
+                 <div *ngIf="outputText && dictionaryEntries.length === 0 && !isLoading" class="w-full mt-4 p-4 rounded-lg border border-[#6a642f] bg-[#2c2a14] text-[#ccc68e] text-sm lg:text-base">
+                    No se encontraron alternativas o ejemplos adicionales para esta traducción.
+                 </div>
 
               </div>
             </div>
@@ -94,7 +114,7 @@
               Aprendizaje de Idiomas Impulsado por IA
             </h1>
             <p class="text-white text-sm sm:text-base lg:text-lg font-normal leading-normal max-w-full sm:max-w-[720px] lg:max-w-[800px]">
-              LinguageAI utiliza IA para proporcionar traducciones precisas, recomendaciones contextuales y ejemplos de uso, mejorando tu viaje de aprendizaje de idiomas.
+              LinguAI utiliza IA para proporcionar traducciones precisas, alternativas contextuales y ejemplos de uso, mejorando tu viaje de aprendizaje de idiomas.
             </p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 p-0">
@@ -105,17 +125,17 @@
                 </svg>
               </div>
               <div class="flex flex-col gap-1">
-                <h2 class="text-white text-base lg:text-lg font-bold leading-tight">Traducción Precisa</h2>
-                <p class="text-[#ccc68e] text-sm lg:text-base font-normal leading-normal">Obtén traducciones instantáneas y precisas entre múltiples idiomas.</p>
+                <h2 class="text-white text-base lg:text-lg font-bold leading-tight">Traducción Principal</h2>
+                <p class="text-[#ccc68e] text-sm lg:text-base font-normal leading-normal">Obtén la traducción más común y directa de tu texto o palabra.</p>
               </div>
             </div>
             <div class="flex flex-1 gap-3 rounded-lg border border-[#6a642f] bg-[#353218] p-4 flex-col">
               <div class="text-white" data-icon="FilePpt" data-size="24px" data-weight="regular">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V88a8,8,0,0,1,16,0v48a8,8,0,0,1-16,0Zm20,32a12,12,0,1,1-12-12A12,12,0,0,1,140,168Z"></path></svg>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,176H48V48H208V208ZM128,80a40,40,0,1,1-40,40A40,40,0,0,1,128,80Zm0,64a24,24,0,1,0-24-24A24,24,0,0,0,128,144Z"></path></svg>
               </div>
               <div class="flex flex-col gap-1">
-                <h2 class="text-white text-base lg:text-lg font-bold leading-tight">Recomendaciones y Contexto</h2>
-                <p class="text-[#ccc68e] text-sm lg:text-base font-normal leading-normal">Comprende mejor el uso con ejemplos y notas culturales proporcionadas por la IA.</p>
+                <h2 class="text-white text-base lg:text-lg font-bold leading-tight">Alternativas y Uso (Diccionario)</h2>
+                <p class="text-[#ccc68e] text-sm lg:text-base font-normal leading-normal">Explora sinónimos y frases de ejemplo en ambos idiomas para un aprendizaje profundo.</p>
               </div>
             </div>
             <div class="flex flex-1 gap-3 rounded-lg border border-[#6a642f] bg-[#353218] p-4 flex-col">
