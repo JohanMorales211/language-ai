@@ -1,4 +1,4 @@
-<div class="relative flex size-full min-h-screen flex-col dark group/design-root overflow-x-hidden">
+<div class="relative flex size-full min-h-screen flex-col bg-[#232110] dark group/design-root overflow-x-hidden">
   <div class="layout-container flex h-full grow flex-col">
     <app-header></app-header>
 
@@ -7,50 +7,47 @@
         <div class="@container">
           <div class="@[480px]:p-4">
             <div
-              class="flex min-h-[380px] sm:min-h-[480px] flex-col gap-4 sm:gap-6 bg-cover bg-center bg-no-repeat @[480px]:gap-8 @[480px]:rounded-xl items-center justify-center p-4"
-              style='background-image: linear-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%), url("assets/images/fondo.png");'
-            >
-              <div class="flex flex-col gap-2 text-center">
+              class="flex min-h-[380px] sm:min-h-[480px] flex-col gap-6 sm:gap-8 @[480px]:gap-8 @[480px]:rounded-xl items-center justify-center p-4">
+              
+              <div class="flex flex-col gap-2 text-center mb-4 sm:mb-6">
                 <h1
                   class="text-white text-3xl sm:text-4xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em]"
                 >
-                  Desbloquea el Mundo de los Idiomas con IA
+                  Traduce lo que quieras con LinguaAI
                 </h1>
-                <h2 class="text-white text-xs sm:text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
-                  Experimenta el futuro del aprendizaje de idiomas con LinguaAI. Traduce, aprende y conéctate entre culturas sin esfuerzo.
-                </h2>
               </div>
-              <label class="flex flex-col min-w-40 h-14 w-full max-w-full sm:max-w-[480px] @[480px]:h-16">
-                <div class="flex w-full flex-1 items-stretch rounded-xl h-full overflow-hidden border border-[#6a642f]">
-                  <div
-                    class="text-[#ccc68e] hidden sm:flex bg-[#353218] items-center justify-center pl-[15px] border-r border-r-[#6a642f]"
-                    data-icon="MagnifyingGlass"
-                    data-size="20px"
-                    data-weight="regular"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
-                      <path
-                        d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"
-                      ></path>
-                    </svg>
+
+              <div class="w-full max-w-full lg:max-w-3xl flex flex-col items-center gap-4 sm:gap-6">
+                <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 @[768px]:gap-6">
+                  <div class="flex flex-col">
+                    <label for="inputText" class="text-[#ccc68e] text-sm mb-1 self-start">Detectar Idioma</label>
+                    <textarea
+                      id="inputText"
+                      rows="4"
+                      placeholder="Escribe o pega texto aquí..."
+                      class="form-textarea w-full flex-1 resize-none rounded-xl text-white focus:outline-0 focus:ring-2 focus:ring-[#f8e006] border border-[#6a642f] bg-[#353218] p-3 placeholder:text-[#ccc68e] text-sm @[480px]:text-base"
+                    ></textarea>
                   </div>
-                  <input
-                    placeholder="Ingresa una palabra o frase"
-                    class="form-input flex w-full min-w-0 flex-1 resize-none text-white focus:outline-0 focus:ring-0 bg-[#353218] h-full placeholder:text-[#ccc68e] px-3 sm:px-[15px] text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal"
-                  />
-                  <button
-                    class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center h-full px-3 sm:px-4 @[480px]:h-full @[480px]:px-5 bg-[#f8e006] text-[#232110] text-xs sm:text-sm font-bold leading-normal tracking-[0.015em] @[480px]:text-base @[480px]:font-bold @[480px]:leading-normal @[480px]:tracking-[0.015em]"
-                  >
-                    <span class="truncate">Traducir/Aprender</span>
-                  </button>
+
+                  <div class="flex flex-col">
+                    <label for="outputText" class="text-[#ccc68e] text-sm mb-1 self-start">Inglés</label>
+                    <textarea
+                      id="outputText"
+                      rows="4"
+                      placeholder="Traducción..."
+                      readonly
+                      class="form-textarea w-full flex-1 resize-none rounded-xl text-white focus:outline-0 border border-[#6a642f] bg-[#2c2a14] p-3 placeholder:text-[#ccc68e] text-sm @[480px]:text-base"
+                    ></textarea>
+                  </div>
                 </div>
-              </label>
+              </div>
+
             </div>
           </div>
         </div>
 
         <div class="flex flex-col gap-8 sm:gap-10 px-0 sm:px-4 py-8 sm:py-10 @container">
-          <div class="flex flex-col gap-3 sm:gap-4">
+          <div class="flex flex-col gap-4">
             <h1
               class="text-white tracking-light text-2xl sm:text-[32px] font-bold leading-tight @[480px]:text-4xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em] max-w-full sm:max-w-[720px]"
             >
@@ -69,7 +66,7 @@
               </div>
               <div class="flex flex-col gap-1">
                 <h2 class="text-white text-base font-bold leading-tight">Traducción</h2>
-                <p class="text-[#ccc68e] text-sm font-normal leading-normal">Obtén traducciones instantáneas y precisas entre idiomas.</p>
+                <p class="text-[#ccc68e] text-sm font-normal leading-normal">Obtén traducciones instantáneas y precisas entre inglés y español.</p>
               </div>
             </div>
             <div class="flex flex-1 gap-3 rounded-lg border border-[#6a642f] bg-[#353218] p-4 flex-col">
