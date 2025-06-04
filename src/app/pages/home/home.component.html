@@ -13,57 +13,91 @@
                 <h1
                   class="text-white text-3xl sm:text-4xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em]"
                 >
-                  Traduce lo que quieras con LinguaAI
+                  Desbloquea el Mundo de los Idiomas con IA
                 </h1>
                 <h2 class="text-white text-xs sm:text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
-                  Este proyecto es una demostración de las capacidades de traducción y comprensión de idiomas de la IA, utilizando un modelo de lenguaje avanzado para ofrecer traducciones precisas y contextuales.
+                  Experimenta el futuro del aprendizaje de idiomas con LinguaAI. Traduce, aprende y conéctate entre culturas sin esfuerzo.
                 </h2>
               </div>
 
               <div class="w-full max-w-full lg:max-w-3xl flex flex-col items-center gap-4 sm:gap-6">
                 <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 @[768px]:gap-6 items-start">
                   <div class="flex flex-col gap-2">
-                    <select
-                      id="sourceLanguage"
-                      name="sourceLanguage"
-                      class="form-select block w-full rounded-md border-[#6a642f] bg-[#353218] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 px-3 text-sm appearance-none"
-                    >
-                      <option value="detect">Detectar Idioma</option>
-                      <option value="es">Español</option>
-                      <option value="en">Inglés</option>
-                      <option value="fr">Francés</option>
-                      <option value="pt">Portugués</option>
-                    </select>
+                    <div class="relative w-full">
+                      <select
+                        id="sourceLanguage"
+                        name="sourceLanguage"
+                        [(ngModel)]="sourceLanguage"
+                        (change)="translateText()"
+                        class="form-select block w-full rounded-md border-[#6a642f] bg-[#353218] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 pl-3 pr-10 text-sm appearance-none"
+                      >
+                        <option value="detect">Detectar Idioma</option>
+                        <option value="es">Español</option>
+                        <option value="en">Inglés</option>
+                        <option value="fr">Francés</option>
+                        <option value="pt">Portugués</option>
+                      </select>
+                      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#ccc68e]">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                          <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                        </svg>
+                      </div>
+                    </div>
                     <textarea
                       id="inputText"
                       rows="5"
                       placeholder="Escribe o pega texto aquí..."
+                      [(ngModel)]="inputText"
+                      (input)="onInputTextChanged()"
                       class="form-textarea w-full flex-1 resize-none rounded-xl text-white focus:outline-0 focus:ring-2 focus:ring-[#f8e006] border border-[#6a642f] bg-[#353218] p-3 placeholder:text-[#ccc68e] text-sm @[480px]:text-base"
                     ></textarea>
                   </div>
 
                   <div class="flex flex-col gap-2">
-                    <select
-                      id="targetLanguage"
-                      name="targetLanguage"
-                      class="form-select block w-full rounded-md border-[#6a642f] bg-[#2c2a14] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 px-3 text-sm appearance-none"
-                    >
-                      <option value="en">Inglés</option>
-                      <option value="es">Español</option>
-                      <option value="fr">Francés</option>
-                      <option value="pt">Portugués</option>
-                    </select>
+                    <div class="relative w-full">
+                      <select
+                        id="targetLanguage"
+                        name="targetLanguage"
+                        [(ngModel)]="targetLanguage"
+                        (change)="translateText()"
+                        class="form-select block w-full rounded-md border-[#6a642f] bg-[#2c2a14] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 pl-3 pr-10 text-sm appearance-none"
+                      >
+                        <option value="en">Inglés</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Francés</option>
+                        <option value="pt">Portugués</option>
+                      </select>
+                      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#ccc68e]">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                          <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                        </svg>
+                      </div>
+                    </div>
                     <textarea
                       id="outputText"
                       rows="5"
                       placeholder="Traducción..."
+                      [(ngModel)]="outputText"
                       readonly
                       class="form-textarea w-full flex-1 resize-none rounded-xl text-white focus:outline-0 border border-[#6a642f] bg-[#2c2a14] p-3 placeholder:text-[#ccc68e] text-sm @[480px]:text-base"
                     ></textarea>
                   </div>
                 </div>
-              </div>
+                <button
+                  *ngIf="!isLoading"
+                  (click)="translateText()"
+                  [disabled]="!inputText.trim()"
+                  class="mt-4 w-full sm:w-auto flex min-w-[120px] max-w-[280px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 sm:h-12 px-5 bg-[#f8e006] text-[#232110] text-sm sm:text-base font-bold leading-normal tracking-[0.015em] disabled:opacity-50 disabled:cursor-not-allowed"
+                >Traducir</button>
+                <div *ngIf="isLoading" class="mt-4 text-white flex items-center justify-center">
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Traduciendo...
+                </div>
 
+              </div>
             </div>
           </div>
         </div>
@@ -76,7 +110,7 @@
               Aprendizaje de Idiomas Impulsado por IA
             </h1>
             <p class="text-white text-sm sm:text-base font-normal leading-normal max-w-full sm:max-w-[720px]">
-              LinguaAI es creado por Johan Morales.
+              LinguaAI utiliza IA de vanguardia para proporcionar traducciones precisas, definiciones concisas y ejemplos de uso contextual, mejorando tu viaje de aprendizaje de idiomas.
             </p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 p-0">
