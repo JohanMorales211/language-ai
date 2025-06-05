@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
 
 export interface DictionaryEntry {
   alternative_in_target_lang: string;
@@ -23,11 +24,13 @@ export interface CerebrasChatCompletionResponse {
   }[];
 }
 
+
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly CEREBRAS_API_KEY = 'csk-e3w55h2rwv5w664x3vecn9v4j4554hyvhkdwykcdwvrv82pf';
+  private readonly CEREBRAS_API_KEY = environment.CEREBRAS_API_KEY;
+
   private readonly CEREBRAS_API_BASE_URL = 'https://api.cerebras.ai/v1';
   private readonly CEREBRAS_MODEL_ID = 'llama-4-scout-17b-16e-instruct';
 
@@ -45,7 +48,7 @@ export class ApiService {
   }
 
   translateText(text: string, targetLanguageCode: string, targetLanguageName: string, systemPromptTemplate: string): Observable<TranslationApiResponse> {
-    if (!this.CEREBRAS_API_KEY.startsWith('csk-')) {
+    if (!this.CEREBRAS_API_KEY || !this.CEREBRAS_API_KEY.startsWith('csk-')) {
         const errorMsg = 'Clave API de Cerebras no configurada o inválida.';
         console.error(errorMsg);
         return throwError(() => new Error(errorMsg));
