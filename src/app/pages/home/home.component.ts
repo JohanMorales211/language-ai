@@ -162,6 +162,9 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
   private initializeLanguageSettings(): void {
     this.detectedSourceLanguageDisplay = UI_DEFAULTS.DETECT_PROMPT;
     this.updateAvailableTargetLanguages();
+    if (!this.targetLanguage && this.availableTargetLanguages.length > 0) {
+      this.targetLanguage = this.availableTargetLanguages[0].code;
+    }
   }
 
   private setupInputTextSubscription(): void {
@@ -182,7 +185,6 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
   }
 
   onInputTextChanged(): void {
-    this.isManualTargetSelection = false;
     this.isRetranslatingForDictionary = false;
     this.inputTextChange$.next(this.inputText);
   }
@@ -199,6 +201,8 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
           },
           error: (err) => this.handleStreamError(err, 'Traducción (Cambio de Idioma)')
         });
+    } else {
+      this.updateAvailableTargetLanguages();
     }
   }
 
@@ -341,9 +345,12 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
     if (!this.targetLanguage && this.availableTargetLanguages.length > 0) {
       this.targetLanguage = this.availableTargetLanguages[0].code;
     } else if (!this.targetLanguage && this.availableTargetLanguages.length === 0) {
-      this.displayError('No hay idioma de destino disponible.', 'Traducción');
-      this.isLoading = false;
-      return of(null);
+      if (this.isManualTargetSelection && this.targetLanguage) {
+      } else {
+        this.displayError('No hay idioma de destino disponible o válido.', 'Traducción');
+        this.isLoading = false;
+        return of(null);
+      }
     }
     const targetLanguageName = this.getLanguageName(this.targetLanguage);
     return this.apiService.translateText(text, this.targetLanguage, targetLanguageName, this.systemPromptTemplate)
@@ -367,7 +374,7 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
 
     const needsRetranslation = this.checkAndAdjustTargetLanguage(isForcedCall);
     if (needsRetranslation) {
-      this.isRetranslatingForDictionary = true;
+      this.isRetranslatingForDictionary = true; 
       this.prepareForTranslation();
       this.fetchTranslation(this.inputText, true)
         .pipe(takeUntil(this.destroy$))
@@ -393,59 +400,76 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
   }
 
   private updateAvailableTargetLanguages(): boolean {
-    const previousTargetLanguage = this.targetLanguage;
+    const previousTargetLanguageValue = this.targetLanguage;
+
     if (this.detectedSourceLanguageCode) {
       this.availableTargetLanguages = this.allTargetLanguages.filter(lang => lang.code !== this.detectedSourceLanguageCode);
     } else {
       this.availableTargetLanguages = [...this.allTargetLanguages];
     }
 
-    let targetLanguageChanged = false;
-    if (this.availableTargetLanguages.length > 0) {
-      if ((this.detectedSourceLanguageCode && this.targetLanguage === this.detectedSourceLanguageCode) || 
-          !this.availableTargetLanguages.find(lang => lang.code === this.targetLanguage)) {
-        this.targetLanguage = this.availableTargetLanguages[0].code;
-        targetLanguageChanged = true;
-      } else if (!this.targetLanguage) {
-         this.targetLanguage = this.availableTargetLanguages[0].code;
-         targetLanguageChanged = true;
-      }
-    } else {
-        if (this.targetLanguage !== '') {
-            this.targetLanguage = '';
-            targetLanguageChanged = true;
+    if (!this.isManualTargetSelection) {
+      let newTargetLanguageCandidate = this.targetLanguage;
+      const isCurrentTargetInNewAvailableList = this.availableTargetLanguages.some(lang => lang.code === newTargetLanguageCandidate);
+
+      if (this.availableTargetLanguages.length > 0) {
+        if (!newTargetLanguageCandidate || newTargetLanguageCandidate === this.detectedSourceLanguageCode || !isCurrentTargetInNewAvailableList) {
+          newTargetLanguageCandidate = this.availableTargetLanguages[0].code;
         }
+      } else {
+        newTargetLanguageCandidate = '';
+      }
+      
+      if (this.targetLanguage !== newTargetLanguageCandidate) {
+        this.targetLanguage = newTargetLanguageCandidate;
+      }
     }
-    return targetLanguageChanged && previousTargetLanguage !== this.targetLanguage;
+
+    return previousTargetLanguageValue !== this.targetLanguage;
   }
   
   private checkAndAdjustTargetLanguage(isForcedCall: boolean): boolean {
-    if (this.isManualTargetSelection || this.isRetranslatingForDictionary) {
-      const listCausedChange = this.updateAvailableTargetLanguages();
-      return listCausedChange && !isForcedCall && this.inputText.trim().length > 0;
+    if (isForcedCall) {
+      this.updateAvailableTargetLanguages();
+      return false;
     }
 
-    let autoTargetChanged = false;
-    let newTargetLang = this.targetLanguage;
+    const originalTargetLanguage = this.targetLanguage;
 
-    if (this.detectedSourceLanguageCode === 'es' && this.targetLanguage !== 'en') {
-      if (this.allTargetLanguages.find(l => l.code === 'en' && l.code !== this.detectedSourceLanguageCode)) newTargetLang = 'en';
-    } else if (this.detectedSourceLanguageCode !== 'es' && this.targetLanguage !== 'es') {
-      if (this.allTargetLanguages.find(l => l.code === 'es' && l.code !== this.detectedSourceLanguageCode)) newTargetLang = 'es';
-    }
-    if (newTargetLang === this.targetLanguage && newTargetLang === this.detectedSourceLanguageCode) {
-        const fallback = this.allTargetLanguages.find(l => l.code !== this.detectedSourceLanguageCode);
-        if (fallback) newTargetLang = fallback.code;
+    if (!this.isManualTargetSelection) {
+      let autoCandidate = this.targetLanguage;
+
+      if (this.detectedSourceLanguageCode === 'es' && this.targetLanguage !== 'en') {
+        if (this.allTargetLanguages.some(l => l.code === 'en' && l.code !== this.detectedSourceLanguageCode)) {
+          autoCandidate = 'en';
+        }
+      } else if (this.detectedSourceLanguageCode !== 'es' && this.targetLanguage !== 'es') {
+        if (this.allTargetLanguages.some(l => l.code === 'es' && l.code !== this.detectedSourceLanguageCode)) {
+          autoCandidate = 'es';
+        }
+      }
+      
+      if (autoCandidate === this.detectedSourceLanguageCode || this.targetLanguage === this.detectedSourceLanguageCode) {
+          const fallback = this.availableTargetLanguages.find(l => l.code !== this.detectedSourceLanguageCode);
+          if (fallback) {
+            autoCandidate = fallback.code;
+          } else if (this.availableTargetLanguages.length > 0) {
+            autoCandidate = this.availableTargetLanguages[0].code;
+          } else {
+            autoCandidate = '';
+          }
+      }
+      
+      if (this.targetLanguage !== autoCandidate && (autoCandidate === '' || this.allTargetLanguages.some(l => l.code === autoCandidate))) {
+        this.targetLanguage = autoCandidate;
+      }
     }
 
-    if (this.targetLanguage !== newTargetLang && this.allTargetLanguages.find(l => l.code === newTargetLang && l.code !== this.detectedSourceLanguageCode)) {
-      this.targetLanguage = newTargetLang;
-      autoTargetChanged = true;
-    }
+    const changedByListUpdateFinal = this.updateAvailableTargetLanguages();
+
+    const finalTargetLanguageChanged = originalTargetLanguage !== this.targetLanguage || changedByListUpdateFinal;
     
-    const listCausedChangeAfterAuto = this.updateAvailableTargetLanguages();
-    
-    return (autoTargetChanged || listCausedChangeAfterAuto) && !isForcedCall && this.inputText.trim().length > 0;
+    return finalTargetLanguageChanged && this.inputText.trim().length > 0;
   }
 
   stopAudio(): void {
@@ -467,7 +491,7 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
       'en': 'en-US',
       'es': 'es-ES',
       'fr': 'fr-FR',
-      'pt': 'pt-PT',
+      'pt': 'pt-PT', 
     };
     return map[langCode.toLowerCase()] || langCode;
   }
@@ -476,11 +500,11 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
     this.clearErrors();
     this.outputText = '';
     this.dictionaryEntries = [];
-    this.detectedSourceLanguageDisplay = this.inputText.trim().length > 0 ? UI_DEFAULTS.DETECT_PROMPT : '';
+    this.detectedSourceLanguageDisplay = this.inputText.trim().length > 0 ? UI_DEFAULTS.DETECT_PROMPT : UI_DEFAULTS.DETECT_PROMPT;
     this.detectedSourceLanguageCode = '';
     this.wasManuallyStopped = true;
     this.stopAudio();
-    this.updateAvailableTargetLanguages();
+    this.updateAvailableTargetLanguages(); 
   }
 
   private clearErrors(): void {
@@ -495,13 +519,13 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
       this.apiError = fullMessage;
       this.outputText = '';
       this.dictionaryEntries = [];
-      this.detectedSourceLanguageDisplay = UI_DEFAULTS.TRANSLATION_ERROR_DISPLAY;
     } else if (type === 'TTS') {
       this.ttsError = fullMessage;
     }
     this.isLoading = false;
     this.isSpeakingInput = false;
     this.isSpeakingOutput = false;
+    this.cdr.detectChanges();
   }
 
   private handleStreamError(err: any, context: string): void {
