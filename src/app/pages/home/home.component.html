@@ -1,226 +1,154 @@
 <div class="relative flex size-full min-h-screen flex-col bg-[#111827] dark group/design-root overflow-x-hidden">
   <div class="layout-container flex h-full grow flex-col">
-    <app-header></app-header>
-
-    <main class="px-4 sm:px-10 md:px-20 lg:px-40 flex flex-1 justify-center py-5">
-      <div class="layout-content-container flex flex-col w-full max-w-[960px] lg:max-w-[1024px] flex-1">
-        <div class="@container">
-          <div class="@[480px]:p-4">
-            <div
-              class="flex min-h-[380px] sm:min-h-[480px] flex-col gap-6 sm:gap-8 @[480px]:gap-8 @[480px]:rounded-xl items-center justify-center p-4">
-
-              <div class="flex flex-col gap-2 text-center mb-4 sm:mb-6 lg:mb-8">
-                <h1
-                  class="text-white text-[34px] sm:text-4xl lg:text-6xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em]">
-                  Traduce lo que quieras con LinguAI
-                </h1>
-                <h2 class="text-white text-sm sm:text-base lg:text-lg font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
-                  Traduce en tiempo real, explora alternativas y aprende.
-                </h2>
-              </div>
-
-              <div class="w-full max-w-full lg:max-w-4xl flex flex-col items-center gap-4 sm:gap-6">
-                <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 @[768px]:gap-6 items-start">
-                  <!-- Columna Izquierda (Input) -->
-                  <div class="flex flex-col gap-1">
-                    <div class="h-10 lg:h-12 flex items-center justify-start text-[#ccc68e] text-sm lg:text-base px-3 py-2 rounded-md border border-transparent">
-                      {{ detectedSourceLanguageDisplay || 'Escribe para detectar idioma...' }}
+    <main class="flex-1">
+      <section id="translator-hero" class="min-h-screen w-full flex flex-col items-center justify-center px-4 sm:px-10 md:px-20 lg:px-40 py-10 overflow-hidden">
+        <div class="flex flex-col w-full max-w-[960px] lg:max-w-[1024px] flex-1 justify-center">
+          <div class="@container">
+            <div class="@[480px]:p-4">
+              <div class="flex flex-col gap-6 sm:gap-8 items-center justify-center p-4">
+                <div class="flex flex-col items-center transition-all duration-700 ease-out" [ngClass]="{'opacity-0 translate-y-4': !animationsInitialized, 'opacity-100 translate-y-0': animationsInitialized}">
+                  <img src="assets/images/logo.png" alt="LinguAI Logo" class="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 mb-6">
+                  <div class="flex flex-col gap-2 text-center">
+                    <h1 class="text-white text-[34px] sm:text-4xl lg:text-6xl font-black leading-tight tracking-[-0.033em]">
+                      Traduce lo que quieras con LinguAI
+                    </h1>
+                    <h2 class="text-white text-sm sm:text-base lg:text-lg font-normal leading-normal">
+                      Traduce en tiempo real, explora alternativas y aprende.
+                    </h2>
+                  </div>
+                </div>
+                <div class="w-full max-w-full lg:max-w-4xl flex flex-col items-center gap-4 sm:gap-6 transition-all duration-700 ease-out delay-200" [ngClass]="{'opacity-0 translate-y-4': !animationsInitialized, 'opacity-100 translate-y-0': animationsInitialized}">
+                  <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 @[768px]:gap-6 items-start">
+                    <div class="flex flex-col gap-1">
+                      <div class="h-10 lg:h-12 flex items-center justify-start text-[#ccc68e] text-sm lg:text-base px-3 py-2 rounded-md">
+                        {{ detectedSourceLanguageDisplay || 'Escribe para detectar idioma...' }}
+                      </div>
+                      <div class="flex flex-col rounded-xl shadow-lg">
+                        <textarea
+                          id="inputText"
+                          rows="6"
+                          placeholder="Escribe o pega texto aquí..."
+                          [(ngModel)]="inputText"
+                          (ngModelChange)="onInputTextChanged()"
+                          class="form-textarea w-full flex-1 resize-none rounded-t-xl text-white focus:outline-0 focus:ring-2 focus:ring-[#f8e006] border border-b-0 border-[#4b5563] bg-[#1f2937] p-4 lg:p-5 placeholder:text-[#ccc68e] text-base sm:text-lg lg:text-xl min-h-[150px] lg:min-h-[200px] transition-shadow duration-300"
+                        ></textarea>
+                        <div *ngIf="inputText && inputText.trim().length > 0 && (detectedSourceLanguageCode === 'es' || detectedSourceLanguageCode === 'en')"
+                             class="flex justify-start items-center p-2 lg:p-3 rounded-b-xl border border-t-0 border-[#4b5563] bg-[#1f2937]">
+                          <button
+                            (click)="playInputText()"
+                            [disabled]="isSpeakingInput || isLoading"
+                            title="Escuchar texto original"
+                            class="p-1 rounded-full text-[#ccc68e] hover:text-white hover:bg-[#374151] focus:outline-none focus:ring-2 focus:ring-[#f8e006] transition-all duration-200 hover:scale-110 active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center"
+                            aria-label="Escuchar texto original"
+                            style="width: 36px; height: 36px;">
+                            <svg *ngIf="!isSpeakingInput" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="h-7 w-7"><polygon points="5,9 9,9 13,5 13,19 9,15 5,15" /><path d="M15 9 C16.5 10.5, 16.5 13.5, 15 15" /><path d="M17.5 6.5 C19.5 9, 19.5 15, 17.5 17.5" /></svg>
+                            <svg *ngIf="isSpeakingInput" class="animate-spin h-7 w-7 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div class="flex flex-col">
-                      <textarea
-                        id="inputText"
-                        rows="6"
-                        placeholder="Escribe o pega texto aquí..."
-                        [(ngModel)]="inputText"
-                        (ngModelChange)="onInputTextChanged()"
-                        class="form-textarea w-full flex-1 resize-none rounded-t-xl text-white focus:outline-0 focus:ring-2 focus:ring-[#f8e006] border border-b-0 border-[#4b5563] bg-[#1f2937] p-4 lg:p-5 placeholder:text-[#ccc68e] text-base sm:text-lg lg:text-xl min-h-[150px] lg:min-h-[200px]"
-                      ></textarea>
-                      <div *ngIf="inputText && inputText.trim().length > 0 && (detectedSourceLanguageCode === 'es' || detectedSourceLanguageCode === 'en')"
-                           class="flex justify-start items-center p-2 lg:p-3 rounded-b-xl border border-t-0 border-[#4b5563] bg-[#1f2937]">
-                        <button
-                          (click)="playInputText()"
-                          [disabled]="isSpeakingInput || isLoading"
-                          title="Escuchar texto original"
-                          class="p-1 rounded-full text-[#ccc68e] hover:text-white hover:bg-[#374151] focus:outline-none focus:ring-2 focus:ring-[#f8e006] transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                          aria-label="Escuchar texto original"
-                          style="width: 36px; height: 36px;">
-                          <svg *ngIf="!isSpeakingInput" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="h-7 w-7">
-                            <polygon points="5,9 9,9 13,5 13,19 9,15 5,15" />
-                            <path d="M15 9 C16.5 10.5, 16.5 13.5, 15 15" />
-                            <path d="M17.5 6.5 C19.5 9, 19.5 15, 17.5 17.5" />
-                          </svg>
-                          <svg *ngIf="isSpeakingInput" class="animate-spin h-7 w-7 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        </button>
+                    <div class="flex flex-col gap-1">
+                      <div class="relative w-full">
+                        <select
+                          id="targetLanguage"
+                          name="targetLanguage"
+                          [(ngModel)]="targetLanguage"
+                          (ngModelChange)="onTargetLanguageChanged()"
+                          class="form-select bg-none block w-full rounded-md border-[#4b5563] bg-[#1f2937] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 lg:py-3 pl-3 pr-10 text-sm sm:text-base lg:text-lg appearance-none transition-all duration-300"
+                          [disabled]="isLoading || availableTargetLanguages.length === 0" style="height: auto;">
+                          <ng-container *ngIf="availableTargetLanguages.length > 0; else noTargetOptions"><option *ngFor="let lang of availableTargetLanguages" [value]="lang.code">{{ lang.name }}</option></ng-container>
+                          <ng-template #noTargetOptions><option value="" disabled selected>-- Elige un idioma --</option></ng-template>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#ccc68e]"><svg class="fill-current h-4 w-4 lg:h-6 lg:w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></div>
+                      </div>
+                      <div class="flex flex-col rounded-xl shadow-lg">
+                        <textarea
+                          id="outputText"
+                          rows="6"
+                          placeholder="Traducción principal..."
+                          [value]="outputText"
+                          readonly
+                          class="form-textarea w-full flex-1 resize-none rounded-t-xl text-white focus:outline-0 border border-b-0 border-[#4b5563] bg-[#1f2937] p-4 lg:p-5 placeholder:text-[#ccc68e] text-base sm:text-lg lg:text-xl min-h-[150px] lg:min-h-[200px]"
+                        ></textarea>
+                        <div *ngIf="outputText && outputText.trim().length > 0 && !apiError"
+                             class="flex justify-between items-center p-2 lg:p-3 rounded-b-xl border border-t-0 border-[#4b5563] bg-[#1f2937]">
+                          <button
+                            *ngIf="targetLanguage === 'es' || targetLanguage === 'en'"
+                            (click)="playOutputText()"
+                            [disabled]="isSpeakingOutput || isLoading"
+                            title="Escuchar traducción"
+                            class="p-1 rounded-full text-[#ccc68e] hover:text-white hover:bg-[#374151] focus:outline-none focus:ring-2 focus:ring-[#f8e006] transition-all duration-200 hover:scale-110 active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center"
+                            aria-label="Escuchar traducción"
+                            style="width: 36px; height: 36px;">
+                            <svg *ngIf="!isSpeakingOutput" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="h-7 w-7"><polygon points="5,9 9,9 13,5 13,19 9,15 5,15" /><path d="M15 9 C16.5 10.5, 16.5 13.5, 15 15" /><path d="M17.5 6.5 C19.5 9, 19.5 15, 17.5 17.5" /></svg>
+                            <svg *ngIf="isSpeakingOutput" class="animate-spin h-7 w-7 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                          </button>
+                          <div *ngIf="!(targetLanguage === 'es' || targetLanguage === 'en')" class="w-[36px]"></div>
+                          <button
+                            (click)="copyTranslatedText()"
+                            [disabled]="!outputText || outputText.trim().length === 0 || isLoading"
+                            [title]="copyButtonText"
+                            class="p-1 rounded-full text-[#ccc68e] hover:text-white hover:bg-[#374151] focus:outline-none focus:ring-2 focus:ring-[#f8e006] transition-all duration-200 hover:scale-110 active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center"
+                            aria-label="Copiar traducción"
+                            style="width: 36px; height: 36px;">
+                            <div class="relative w-7 h-7 flex items-center justify-center">
+                              <svg *ngIf="!isCopied" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="h-7 w-7 transition-opacity duration-300" [class.opacity-0]="isCopied"><rect x="7" y="7" width="14" height="14" rx="2" ry="2" /><rect x="3" y="3" width="14" height="14" rx="2" ry="2" /></svg>
+                              <svg *ngIf="isCopied" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="absolute block text-green-400 h-7 w-7 transition-opacity duration-300" [class.opacity-100]="isCopied"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>
+                            </div>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  <!-- Columna Derecha (Output) -->
-                  <div class="flex flex-col gap-1">
-                    <div class="relative w-full">
-                      <select
-                        id="targetLanguage"
-                        name="targetLanguage"
-                        [(ngModel)]="targetLanguage"
-                        (ngModelChange)="onTargetLanguageChanged()"
-                        class="form-select bg-none block w-full rounded-md border-[#4b5563] bg-[#1f2937] text-[#ccc68e] focus:border-[#f8e006] focus:ring focus:ring-[#f8e006] focus:ring-opacity-50 py-2 lg:py-3 pl-3 pr-10 text-sm sm:text-base lg:text-lg appearance-none"
-                        [disabled]="isLoading || availableTargetLanguages.length === 0" style="height: auto;">
-                        <ng-container *ngIf="availableTargetLanguages.length > 0; else noTargetOptions">
-                          <option *ngFor="let lang of availableTargetLanguages" [value]="lang.code">
-                            {{ lang.name }}
-                          </option>
-                        </ng-container>
-                        <ng-template #noTargetOptions>
-                          <option value="" disabled selected>-- Elige un idioma --</option>
-                        </ng-template>
-                      </select>
-                      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#ccc68e]">
-                        <svg class="fill-current h-4 w-4 lg:h-6 lg:w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                          <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
-                        </svg>
-                      </div>
-                    </div>
-                    <div class="flex flex-col">
-                      <textarea
-                        id="outputText"
-                        rows="6"
-                        placeholder="Traducción principal..."
-                        [value]="outputText"
-                        readonly
-                        class="form-textarea w-full flex-1 resize-none rounded-t-xl text-white focus:outline-0 border border-b-0 border-[#4b5563] bg-[#1f2937] p-4 lg:p-5 placeholder:text-[#ccc68e] text-base sm:text-lg lg:text-xl min-h-[150px] lg:min-h-[200px]"
-                      ></textarea>
-                      <div *ngIf="outputText && outputText.trim().length > 0 && !apiError"
-                           class="flex justify-between items-center p-2 lg:p-3 rounded-b-xl border border-t-0 border-[#4b5563] bg-[#1f2937]">
-                        <button
-                          *ngIf="targetLanguage === 'es' || targetLanguage === 'en'"
-                          (click)="playOutputText()"
-                          [disabled]="isSpeakingOutput || isLoading"
-                          title="Escuchar traducción"
-                          class="p-1 rounded-full text-[#ccc68e] hover:text-white hover:bg-[#374151] focus:outline-none focus:ring-2 focus:ring-[#f8e006] transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                          aria-label="Escuchar traducción"
-                          style="width: 36px; height: 36px;">
-                          <svg *ngIf="!isSpeakingOutput" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="h-7 w-7">
-                            <polygon points="5,9 9,9 13,5 13,19 9,15 5,15" />
-                            <path d="M15 9 C16.5 10.5, 16.5 13.5, 15 15" />
-                            <path d="M17.5 6.5 C19.5 9, 19.5 15, 17.5 17.5" />
-                          </svg>
-                          <svg *ngIf="isSpeakingOutput" class="animate-spin h-7 w-7 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        </button>
-                        <div *ngIf="!(targetLanguage === 'es' || targetLanguage === 'en')" class="w-[36px]"></div>
-
-                        <button
-                          (click)="copyTranslatedText()"
-                          [disabled]="!outputText || outputText.trim().length === 0 || isLoading"
-                          [title]="copyButtonText"
-                          class="p-1 rounded-full text-[#ccc68e] hover:text-white hover:bg-[#374151] focus:outline-none focus:ring-2 focus:ring-[#f8e006] transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                           aria-label="Copiar traducción"
-                           style="width: 36px; height: 36px;">
-                          <svg *ngIf="!isCopied" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="h-7 w-7">
-                            <rect x="7" y="7" width="14" height="14" rx="2" ry="2" />
-                            <rect x="3" y="3" width="14" height="14" rx="2" ry="2" />
-                          </svg>
-                          <svg *ngIf="isCopied" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="block text-green-400 h-7 w-7">
-                            <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div *ngIf="apiError" class="w-full mt-2 p-3 rounded-md bg-red-800 text-red-100 border border-red-700 text-sm lg:text-base">
-                  {{ apiError }}
-                </div>
-                <div *ngIf="ttsError" class="w-full mt-1 p-3 rounded-md bg-orange-800 text-orange-100 border border-orange-700 text-sm lg:text-base">
-                  {{ ttsError }}
-                </div>
-
-                <div *ngIf="isLoading && !isSpeakingInput && !isSpeakingOutput" class="mt-4 text-white flex items-center justify-center h-12">
-                  <svg class="animate-spin -ml-1 mr-3 h-6 w-6 lg:h-7 lg:w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span class="lg:text-xl">Traduciendo...</span>
-                </div>
-                <div *ngIf="!isLoading && !apiError && !ttsError" class="mt-2 h-12"></div>
-
-
-                <div *ngIf="outputText && dictionaryEntries.length > 0 && !isLoading && !apiError" class="w-full mt-2 lg:mt-4">
-                   <h3 class="text-lg lg:text-2xl font-semibold text-white mb-3 lg:mb-4">Diccionario: Uso y Alternativas</h3>
-                   <div class="space-y-4 lg:space-y-5">
-                     <div *ngFor="let entry of dictionaryEntries; let i = index" class="p-4 lg:p-5 rounded-lg border border-[#4b5563] bg-[#1f2937]">
-                       <h4 class="text-[#f8e006] font-semibold text-md lg:text-xl mb-1 lg:mb-2">
-                         <span *ngIf="i === 0 && entry.alternative_in_target_lang === outputText" class="text-amber-300">(Traducción Principal): </span>
-                         <span *ngIf="i > 0 || (i === 0 && entry.alternative_in_target_lang !== outputText)">{{ i + 1 }}. </span>
-                         {{ entry.alternative_in_target_lang }}
-                       </h4>
-                       <div *ngIf="entry.example_original_lang && entry.example_target_lang" class="text-sm lg:text-lg">
-                         <p class="text-[#ccc68e] italic mt-1">Ej. ({{ getLanguageName(detectedSourceLanguageCode) }}): {{ entry.example_original_lang }}</p>
-                         <p class="text-white">Ej. ({{ getLanguageName(targetLanguage) }}): {{ entry.example_target_lang }}</p>
-                       </div>
-                       <div *ngIf="!(entry.example_original_lang && entry.example_target_lang) && entry.alternative_in_target_lang" class="text-sm lg:text-lg text-[#ccc68e] italic mt-1">
-                         (No hay ejemplos detallados para esta entrada)
+                  <div *ngIf="apiError" class="w-full mt-2 p-3 rounded-md bg-red-800 text-red-100 border border-red-700 text-sm lg:text-base">{{ apiError }}</div>
+                  <div *ngIf="ttsError" class="w-full mt-1 p-3 rounded-md bg-orange-800 text-orange-100 border border-orange-700 text-sm lg:text-base">{{ ttsError }}</div>
+                  <div *ngIf="isLoading && !isSpeakingInput && !isSpeakingOutput" class="mt-4 text-white flex items-center justify-center h-12"><svg class="animate-spin -ml-1 mr-3 h-6 w-6 lg:h-7 lg:w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="lg:text-xl">Traduciendo...</span></div>
+                  <div *ngIf="!isLoading && !apiError && !ttsError" class="mt-2 h-12"></div>
+                  <div *ngIf="outputText && dictionaryEntries.length > 0 && !isLoading && !apiError" class="w-full mt-2 lg:mt-4">
+                     <h3 class="text-lg lg:text-2xl font-semibold text-white mb-3 lg:mb-4">Diccionario: Uso y Alternativas</h3>
+                     <div class="space-y-4 lg:space-y-5">
+                       <div *ngFor="let entry of dictionaryEntries; let i = index" class="p-4 lg:p-5 rounded-lg border border-[#4b5563] bg-[#1f2937] transition-all duration-300 hover:border-[#f8e006] hover:shadow-xl">
+                         <h4 class="text-[#f8e006] font-semibold text-md lg:text-xl mb-1 lg:mb-2"><span *ngIf="i === 0 && entry.alternative_in_target_lang === outputText" class="text-amber-300">(Traducción Principal): </span><span *ngIf="i > 0 || (i === 0 && entry.alternative_in_target_lang !== outputText)">{{ i + 1 }}. </span>{{ entry.alternative_in_target_lang }}</h4>
+                         <div *ngIf="entry.example_original_lang && entry.example_target_lang" class="text-sm lg:text-lg"><p class="text-[#ccc68e] italic mt-1">Ej. ({{ getLanguageName(detectedSourceLanguageCode) }}): {{ entry.example_original_lang }}</p><p class="text-white">Ej. ({{ getLanguageName(targetLanguage) }}): {{ entry.example_target_lang }}</p></div>
+                         <div *ngIf="!(entry.example_original_lang && entry.example_target_lang) && entry.alternative_in_target_lang" class="text-sm lg:text-lg text-[#ccc68e] italic mt-1">(No hay ejemplos detallados para esta entrada)</div>
                        </div>
                      </div>
-                   </div>
+                  </div>
+                   <div *ngIf="outputText && dictionaryEntries.length === 0 && !isLoading && !apiError" class="w-full mt-2 lg:mt-4 p-4 lg:p-5 rounded-lg border border-[#4b5563] bg-[#1f2937] text-[#ccc68e] text-sm lg:text-lg">No se encontraron alternativas o ejemplos adicionales para esta traducción.</div>
                 </div>
-                 <div *ngIf="outputText && dictionaryEntries.length === 0 && !isLoading && !apiError" class="w-full mt-2 lg:mt-4 p-4 lg:p-5 rounded-lg border border-[#4b5563] bg-[#1f2937] text-[#ccc68e] text-sm lg:text-lg">
-                    No se encontraron alternativas o ejemplos adicionales para esta traducción.
-                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <div class="flex flex-col gap-8 sm:gap-10 lg:gap-12 px-0 sm:px-4 py-8 sm:py-10 lg:py-16 @container">
-          <div class="flex flex-col gap-4">
-            <h1
-              class="text-white tracking-light text-2xl sm:text-[32px] lg:text-5xl font-bold leading-tight @[480px]:text-4xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em] max-w-full sm:max-w-[720px] lg:max-w-[800px]">
-              Aprendizaje de Idiomas Impulsado por IA
-            </h1>
-            <p class="text-white text-sm sm:text-base lg:text-xl font-normal leading-normal max-w-full sm:max-w-[720px] lg:max-w-[800px]">
-              LinguAI utiliza IA para proporcionar traducciones precisas, alternativas contextuales y ejemplos de uso, mejorando tu viaje de aprendizaje de idiomas.
-            </p>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 lg:gap-6 p-0">
-            <div class="flex flex-1 gap-3 rounded-lg border border-[#4b5563] bg-[#1f2937] p-5 sm:p-4 lg:p-6 flex-col">
-              <div class="text-white" data-icon="Translate" data-size="24px" data-weight="regular">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256">
-                  <path d="M239.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,100,126.93,103.65,103.65,0,0,0,127.69,64H152a8,8,0,0,0,0-16H96V32a8,8,0,0,0-16,0V48H24a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,88,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,76,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L140.94,192h70.11l13.79,27.58A8,8,0,0,0,232,224a8,8,0,0,0,7.15-11.58ZM148.94,176,176,121.89,203.05,176Z"></path>
-                </svg>
-              </div>
-              <div class="flex flex-col gap-1">
-                <h2 class="text-white text-lg sm:text-base lg:text-xl font-bold leading-tight">Traducción Principal</h2>
-                <p class="text-[#ccc68e] text-base sm:text-sm lg:text-lg font-normal leading-normal">Obtén la traducción más común y directa de tu texto o palabra.</p>
-              </div>
+      </section>
+      <section #featuresSection id="features" class="w-full flex flex-col items-center justify-center py-16 sm:py-20 lg:py-24 px-4 sm:px-10 md:px-20 lg:px-40 bg-[#141c2c]">
+        <div class="w-full max-w-[960px] lg:max-w-[1024px]">
+          <div class="flex flex-col gap-8 sm:gap-10 lg:gap-12 @container">
+            <div class="flex flex-col gap-4 will-animate">
+              <h1 class="text-white tracking-light text-2xl sm:text-[32px] lg:text-5xl font-bold leading-tight">
+                Aprendizaje de Idiomas Impulsado por IA
+              </h1>
+              <p class="text-white text-sm sm:text-base lg:text-xl font-normal leading-normal max-w-full sm:max-w-[720px] lg:max-w-[800px]">
+                LinguAI utiliza IA para proporcionar traducciones precisas, alternativas contextuales y ejemplos de uso, mejorando tu viaje de aprendizaje de idiomas.
+              </p>
             </div>
-            <div class="flex flex-1 gap-3 rounded-lg border border-[#4b5563] bg-[#1f2937] p-5 sm:p-4 lg:p-6 flex-col">
-              <div class="text-white" data-icon="FilePpt" data-size="24px" data-weight="regular">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,176H48V48H208V208ZM128,80a40,40,0,1,1-40,40A40,40,0,0,1,128,80Zm0,64a24,24,0,1,0-24-24A24,24,0,0,0,128,144Z"></path></svg>
+            <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 lg:gap-6 p-0">
+              <div class="flex flex-1 gap-4 rounded-lg border border-[#4b5563] bg-[#1f2937] p-5 lg:p-6 flex-col will-animate transition-all duration-300 ease-out hover:transform hover:-translate-y-2 hover:shadow-2xl hover:border-[#f8e006]">
+                <div class="text-white"><svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256"><path d="M239.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,100,126.93,103.65,103.65,0,0,0,127.69,64H152a8,8,0,0,0,0-16H96V32a8,8,0,0,0-16,0V48H24a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,88,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,76,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L140.94,192h70.11l13.79,27.58A8,8,0,0,0,232,224a8,8,0,0,0,7.15-11.58ZM148.94,176,176,121.89,203.05,176Z"></path></svg></div>
+                <div class="flex flex-col gap-1"><h2 class="text-white text-lg lg:text-xl font-bold leading-tight">Traducción Principal</h2><p class="text-[#ccc68e] text-base lg:text-lg font-normal leading-normal">Obtén la traducción más común y directa de tu texto o palabra.</p></div>
               </div>
-              <div class="flex flex-col gap-1">
-                <h2 class="text-white text-lg sm:text-base lg:text-xl font-bold leading-tight">Alternativas y Uso (Diccionario)</h2>
-                <p class="text-[#ccc68e] text-base sm:text-sm lg:text-lg font-normal leading-normal">Explora sinónimos y frases de ejemplo en ambos idiomas para un aprendizaje profundo.</p>
+              <div class="flex flex-1 gap-4 rounded-lg border border-[#4b5563] bg-[#1f2937] p-5 lg:p-6 flex-col will-animate transition-all duration-300 ease-out hover:transform hover:-translate-y-2 hover:shadow-2xl hover:border-[#f8e006]" style="transition-delay: 100ms;">
+                <div class="text-white"><svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,176H48V48H208V208ZM128,80a40,40,0,1,1-40,40A40,40,0,0,1,128,80Zm0,64a24,24,0,1,0-24-24A24,24,0,0,0,128,144Z"></path></svg></div>
+                <div class="flex flex-col gap-1"><h2 class="text-white text-lg lg:text-xl font-bold leading-tight">Alternativas y Uso (Diccionario)</h2><p class="text-[#ccc68e] text-base lg:text-lg font-normal leading-normal">Explora sinónimos y frases de ejemplo para un aprendizaje profundo.</p></div>
               </div>
-            </div>
-            <div class="flex flex-1 gap-3 rounded-lg border border-[#4b5563] bg-[#1f2937] p-5 sm:p-4 lg:p-6 flex-col">
-              <div class="text-white" data-icon="Article" data-size="24px" data-weight="regular">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256"><path d="M160,16A80,80,0,0,0,83.29,124.71L30.34,177.66a8,8,0,0,0,0,11.31,8,8,0,0,0,11.32,0L94.59,136A79.93,79.93,0,1,0,160,16Zm0,144a64,64,0,1,1,64-64A64.07,64.07,0,0,1,160,160Z"></path></svg>
-              </div>
-              <div class="flex flex-col gap-1">
-                <h2 class="text-white text-lg sm:text-base lg:text-xl font-bold leading-tight">Detección Automática</h2>
-                <p class="text-[#ccc68e] text-base sm:text-sm lg:text-lg font-normal leading-normal">Identifica el idioma de entrada sin esfuerzo para una experiencia fluida.</p>
+              <div class="flex flex-1 gap-4 rounded-lg border border-[#4b5563] bg-[#1f2937] p-5 lg:p-6 flex-col will-animate transition-all duration-300 ease-out hover:transform hover:-translate-y-2 hover:shadow-2xl hover:border-[#f8e006]" style="transition-delay: 200ms;">
+                <div class="text-white"><svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256"><path d="M160,16A80,80,0,0,0,83.29,124.71L30.34,177.66a8,8,0,0,0,0,11.31,8,8,0,0,0,11.32,0L94.59,136A79.93,79.93,0,1,0,160,16Zm0,144a64,64,0,1,1,64-64A64.07,64.07,0,0,1,160,160Z"></path></svg></div>
+                <div class="flex flex-col gap-1"><h2 class="text-white text-lg lg:text-xl font-bold leading-tight">Detección Automática</h2><p class="text-[#ccc68e] text-base lg:text-lg font-normal leading-normal">Identifica el idioma de entrada sin esfuerzo para una experiencia fluida.</p></div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </main>
     <app-footer></app-footer>
   </div>

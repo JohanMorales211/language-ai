@@ -1,10 +1,9 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, NgZone, ElementRef, ViewChild, Renderer2 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject, Observable, of, timer } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap, catchError, takeUntil } from 'rxjs/operators';
 
-import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { ApiService, TranslationApiResponse, DictionaryEntry } from '../../services/api.service';
 
@@ -23,14 +22,19 @@ interface Language {
   name: string;
 }
 
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css'],
   standalone: true,
-  imports: [ FormsModule, CommonModule, HeaderComponent, FooterComponent ]
+  imports: [ FormsModule, CommonModule, FooterComponent ]
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
+  animationsInitialized = false;
+
+  @ViewChild('featuresSection') featuresSection!: ElementRef;
+  private observer!: IntersectionObserver;
+  
   inputText: string = '';
   outputText: string = '';
   detectedSourceLanguageDisplay: string = '';
@@ -125,10 +129,12 @@ Ejemplo si el usuario escribe: "hola como te ha ido el dia de hoy?" (Detectado: 
 }
 Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentarios o explicaciones fuera del objeto JSON. El JSON debe ser parseable directamente.`;
 
+
   constructor(
     private apiService: ApiService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private renderer: Renderer2
   ) {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       this.speechSynthesis = window.speechSynthesis;
@@ -139,12 +145,52 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
   ngOnInit(): void {
     this.initializeLanguageSettings();
     this.setupInputTextSubscription();
+    
+    setTimeout(() => {
+      this.animationsInitialized = true;
+      this.cdr.detectChanges();
+    }, 100);
+  }
+
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
     this.stopAudio();
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+  }
+
+  private setupIntersectionObserver(): void {
+    const options = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.2
+    };
+
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const elementsToAnimate = (entry.target as HTMLElement).querySelectorAll('.will-animate');
+          elementsToAnimate.forEach(el => {
+            this.renderer.addClass(el, 'is-visible');
+          });
+        } else {
+           const elementsToAnimate = (entry.target as HTMLElement).querySelectorAll('.will-animate');
+           elementsToAnimate.forEach(el => {
+             this.renderer.removeClass(el, 'is-visible');
+           });
+        }
+      });
+    }, options);
+
+    if (this.featuresSection && this.featuresSection.nativeElement) {
+      this.observer.observe(this.featuresSection.nativeElement);
+    }
   }
   
   private loadVoices(): void {
