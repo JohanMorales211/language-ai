@@ -1,0 +1,38 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies 📦
+        run: npm ci
+
+      - name: Build 🏗️
+        run: npm run build:gh
+
+      - name: Replace API Key in production files 🔑
+        run: |
+          sed -i "s/CEREBRAS_API_KEY:''/CEREBRAS_API_KEY:'${{ secrets.CEREBRAS_API_KEY }}'/g" dist/language-teacher/main.*.js
+
+      - name: Deploy 🚀
+        uses: angular-schule/angular-cli-ghpages@v1.4.0
+        with:
+          dir: dist/language-teacher
