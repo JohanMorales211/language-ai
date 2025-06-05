@@ -177,23 +177,46 @@ export class HomeComponent implements OnInit, OnDestroy {
     console.log(`callTranslationAPI: targetLang=${this.targetLanguage} (${targetLanguageName}), isForcedCall=${isForcedCall}, isManual=${this.isManualTargetSelection}`);
 
     const systemPrompt = `Eres un traductor experto y un creador de contenido de diccionario muy detallado.
-Para el texto proporcionado por el usuario:
-1.  Detecta el idioma del texto original. Llama a este "Idioma Detectado".
-2.  Proporciona la traducción más directa y común del texto original al idioma "${targetLanguageName}". Llama a este "Idioma de Destino". Esta es la "Traducción Principal".
-3.  Crea una entrada de diccionario para esta "Traducción Principal":
-    a.  En el campo "alternative_in_target_lang" de esta primera entrada, coloca la "Traducción Principal".
-    b.  Proporciona una frase de ejemplo corta y clara en el "Idioma Detectado" que use el texto original.
-    c.  Proporciona la traducción de esa frase de ejemplo al "Idioma de Destino" ("${targetLanguageName}"), asegurándote de que esta traducción utilice la "Traducción Principal".
-4.  Adicionalmente, identifica 1-2 alternativas o sinónimos comunes para el SIGNIFICADO del TEXTO ORIGINAL, pero expresados también en el "Idioma de Destino" ("${targetLanguageName}").
-5.  Para cada una de estas ALTERNATIVAS:
-    a.  En el campo "alternative_in_target_lang" de estas entradas subsecuentes, coloca la alternativa.
-    b.  Proporciona una frase de ejemplo corta y clara en el "Idioma Detectado" que use el texto original o una frase con significado muy similar.
-    c.  Proporciona la traducción de esa frase de ejemplo al "Idioma de Destino" ("${targetLanguageName}"), asegurándote de que esta traducción utilice la ALTERNATIVA específica que estás ejemplificando.
-    *La estructura de ejemplo bilingüe (frase original en "Idioma Detectado", y su traducción al "Idioma de Destino" usando la alternativa/traducción principal) debe mantenerse consistentemente para TODAS las direcciones de traducción.*
-6.  Devuelve ÚNICAMENTE un objeto JSON válido con las siguientes claves:
-    *   "detected_language_code": El código ISO 639-1 del "Idioma Detectado".
-    *   "translation": La "Traducción Principal" del texto original al "Idioma de Destino". (Esta DEBE COINCIDIR con el valor de "alternative_in_target_lang" de la primera entrada en "dictionary_entries").
-    *   "dictionary_entries": Un array de objetos. La PRIMERA entrada DEBE ser para la "Traducción Principal". Cada objeto debe tener: "alternative_in_target_lang", "example_original_lang", "example_target_lang".
+Tu tarea PRIMORDIAL e INICIAL es traducir el TEXTO COMPLETO proporcionado por el usuario.
+
+Sigue estos pasos estrictamente:
+1.  Detecta el idioma del texto original ingresado por el usuario. Llama a este "Idioma Detectado".
+2.  **Traducción Principal (Campo "translation")**: Traduce la TOTALIDAD del texto original del usuario al idioma "${targetLanguageName}". Esta traducción debe ser completa y precisa, reflejando el significado completo de la frase o texto de entrada. NO abrevies, NO resumas, y NO traduzcas solo la primera palabra o una parte para este campo. El campo "translation" en el JSON de salida DEBE contener esta traducción completa.
+3.  **Entradas de Diccionario (Campo "dictionary_entries")**:
+    a.  La PRIMERA entrada en "dictionary_entries" debe tener su campo "alternative_in_target_lang" EXACTAMENTE IGUAL a la "Traducción Principal" (la traducción completa del paso 2).
+    b.  Para esta primera entrada de diccionario:
+        i.  "example_original_lang": Debe ser la frase o texto original COMPLETO que el usuario ingresó.
+        ii. "example_target_lang": Debe ser la traducción COMPLETA de esa frase original (es decir, la "Traducción Principal").
+    c.  Adicionalmente, si es pertinente para el texto original, identifica 1 o MÁXIMO 2 alternativas de traducción o sinónimos comunes para el SIGNIFICADO GENERAL del TEXTO ORIGINAL, o para partes CLAVE del mismo, siempre expresados en el "Idioma de Destino" ("${targetLanguageName}").
+    d.  Para cada una de estas ALTERNATIVAS ADICIONALES (si las hay):
+        i.  "alternative_in_target_lang": Coloca la alternativa de traducción.
+        ii. "example_original_lang": Proporciona una frase de ejemplo CORTA Y CLARA en el "Idioma Detectado" que use el texto original o un concepto muy similar al que se refiere la alternativa.
+        iii. "example_target_lang": Proporciona la traducción de esa frase de ejemplo al "Idioma de Destino", asegurándote de que esta traducción utilice la ALTERNATIVA específica que estás ejemplificando.
+4.  Formato de Salida: Devuelve ÚNICAMENTE un objeto JSON válido y bien formado con las siguientes claves:
+    *   "detected_language_code": El código ISO 639-1 del "Idioma Detectado". (Ej: "es", "en")
+    *   "translation": La "Traducción Principal" COMPLETA del texto original al "Idioma de Destino".
+    *   "dictionary_entries": Un array de objetos.
+        *   La PRIMERA entrada es para la "Traducción Principal".
+        *   Las entradas subsecuentes (si existen, máximo 2) son para las alternativas.
+        *   Cada objeto debe tener: "alternative_in_target_lang", "example_original_lang", "example_target_lang".
+
+Ejemplo si el usuario escribe: "hola como te ha ido el dia de hoy?" (Detectado: Español) y targetLanguage es Inglés:
+{
+  "detected_language_code": "es",
+  "translation": "hello, how has your day been today?",
+  "dictionary_entries": [
+    {
+      "alternative_in_target_lang": "hello, how has your day been today?",
+      "example_original_lang": "hola como te ha ido el dia de hoy?",
+      "example_target_lang": "hello, how has your day been today?"
+    },
+    {
+      "alternative_in_target_lang": "Hi, how was your day?",
+      "example_original_lang": "Qué tal tu día?",
+      "example_target_lang": "How was your day?"
+    }
+  ]
+}
 
 Ejemplo si el usuario escribe "sin embargo" (Detectado: Español) y targetLanguage es Inglés:
 {
@@ -204,16 +227,7 @@ Ejemplo si el usuario escribe "sin embargo" (Detectado: Español) y targetLangua
     {"alternative_in_target_lang": "nevertheless", "example_original_lang": "No estudió; sin embargo, aprobó.", "example_target_lang": "He didn't study; nevertheless, he passed."}
   ]
 }
-Ejemplo si el usuario escribe "actually" (Detectado: Inglés) y targetLanguage es Español:
-{
-  "detected_language_code": "en",
-  "translation": "en realidad",
-  "dictionary_entries": [
-    {"alternative_in_target_lang": "en realidad", "example_original_lang": "Actually, I prefer tea.", "example_target_lang": "En realidad, prefiero el té."},
-    {"alternative_in_target_lang": "de hecho", "example_original_lang": "It's not blue, actually, it's green.", "example_target_lang": "No es azul, de hecho, verde."}
-  ]
-}
-Asegúrate de que el JSON sea estrictamente válido. No incluyas texto fuera del JSON.`;
+Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentarios o explicaciones fuera del objeto JSON. El JSON debe ser parseable directamente.`;
 
     const apiUrl = `${this.CEREBRAS_API_BASE_URL}/chat/completions`;
     const body = { model: this.CEREBRAS_MODEL_ID, messages: [{ role: "system", content: systemPrompt },{ role: "user", content: text }], temperature: 0.35, max_completion_tokens: 2800, top_p: 1, stream: false };
@@ -228,7 +242,9 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto fuera del
           try {
             let responseContent = response?.choices?.[0]?.message?.content || '{}';
             const jsonMatch = responseContent.match(/\{[\s\S]*\}/);
-            if (jsonMatch && jsonMatch[0]) { responseContent = jsonMatch[0]; }
+            if (jsonMatch && jsonMatch[0]) {
+              responseContent = jsonMatch[0];
+            }
             const parsedResponse: TranslationApiResponse = JSON.parse(responseContent);
 
             if (parsedResponse && parsedResponse.translation && parsedResponse.detected_language_code) {
@@ -241,7 +257,7 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto fuera del
               const targetLangBeforeAutoChange = this.targetLanguage;
               let autoTargetChanged = false;
 
-              if (!this.isManualTargetSelection) {
+              if (!this.isManualTargetSelection && !this.isRetranslatingForDictionary) {
                 let newTargetLang = this.targetLanguage;
                 if (this.detectedSourceLanguageCode === 'es' && this.targetLanguage !== 'en') {
                   if (this.allTargetLanguages.find(l => l.code === 'en' && l.code !== this.detectedSourceLanguageCode)) newTargetLang = 'en';
@@ -262,14 +278,13 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto fuera del
               const listActuallyChangedTarget = this.updateAvailableTargetLanguages();
 
               if ((autoTargetChanged || listActuallyChangedTarget) && !isForcedCall && !this.isRetranslatingForDictionary && this.inputText.trim().length > 0) {
-                console.log('Target language was auto-adjusted. Re-calling API to update dictionary examples for new target:', this.targetLanguage);
+                console.log('Target language was auto-adjusted or updated. Re-calling API to update dictionary examples for new target:', this.targetLanguage);
                 this.isRetranslatingForDictionary = true;
                 this.isLoading = true;
                 this.callTranslationAPI(this.inputText, true).subscribe(() => {
                 });
                 return;
               }
-
 
             } else {
               this.handleApiError('Respuesta JSON no válida o incompleta.', parsedResponse);
@@ -278,7 +293,9 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto fuera del
             this.handleApiError('Error al procesar respuesta API (JSON).', response?.choices?.[0]?.message?.content, e);
           }
         },
-        error: (error) => { this.handleApiError('Error en llamada API.', error); }
+        error: (error) => {
+          this.handleApiError('Error en llamada API.', error);
+        }
       }),
       catchError(error => {
         this.handleApiError('Error HTTP en la llamada a la API.', error);
@@ -289,9 +306,9 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto fuera del
 
   private handleApiError(message: string, errorData?: any, parseError?: any) {
     this.isLoading = false;
-    this.outputText = message;
-    this.detectedSourceLanguageDisplay = 'Error';
+    this.outputText = `Error: ${message}`;
+    this.detectedSourceLanguageDisplay = 'Error de traducción';
     this.dictionaryEntries = [];
-    console.error(message, 'Datos del error:', errorData, 'Error de parseo:', parseError);
+    console.error(message, 'Datos del error:', errorData, 'Error de parseo (si aplica):', parseError);
   }
 }
