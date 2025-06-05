@@ -62,6 +62,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private currentInputUtterance: SpeechSynthesisUtterance | null = null;
   private currentOutputUtterance: SpeechSynthesisUtterance | null = null;
   private availableVoices: SpeechSynthesisVoice[] = [];
+  private wasManuallyStopped: boolean = false;
 
   private readonly systemPromptTemplate = `Eres un traductor experto y un creador de contenido de diccionario muy detallado.
 Tu tarea PRIMORDIAL e INICIAL es traducir el TEXTO COMPLETO proporcionado por el usuario.
@@ -71,14 +72,14 @@ Sigue estos pasos estrictamente:
 2.  **Traducción Principal (Campo "translation")**: Traduce la TOTALIDAD del texto original del usuario al idioma "\${targetLanguageName}". Esta traducción debe ser completa y precisa, reflejando el significado completo de la frase o texto de entrada. NO abrevies, NO resumas, y NO traduzcas solo la primera palabra o una parte para este campo. El campo "translation" en el JSON de salida DEBE contener esta traducción completa.
 3.  **Entradas de Diccionario (Campo "dictionary_entries")**:
     a.  La PRIMERA entrada en "dictionary_entries" debe tener su campo "alternative_in_target_lang" EXACTAMENTE IGUAL a la "Traducción Principal" (la traducción completa del paso 2).
-    b.  Para esta primera entrada de diccionario:
-        i.  "example_original_lang": Debe ser la frase o texto original COMPLETO que el usuario ingresó.
-        ii. "example_target_lang": Debe ser la traducción COMPLETA de esa frase original (es decir, la "Traducción Principal").
+    b.  Para esta primera entrada de diccionario (correspondiente a la "Traducción Principal"):
+        i.  "example_original_lang": Proporciona una **FRASE DE EJEMPLO CORTA Y NATURAL** en el "Idioma Detectado" que utilice el texto original del usuario en un contexto claro. **La frase debe ser más que solo la palabra o frase original.**
+        ii. "example_target_lang": Proporciona la traducción **EXACTA Y COMPLETA** de la "example_original_lang" (del paso 3.b.i) al "Idioma de Destino" ("\${targetLanguageName}"), asegurándote de que esta traducción utilice la "Traducción Principal".
     c.  Adicionalmente, si es pertinente para el texto original, identifica 1 o MÁXIMO 2 alternativas de traducción o sinónimos comunes para el SIGNIFICADO GENERAL del TEXTO ORIGINAL, o para partes CLAVE del mismo, siempre expresados en el "Idioma de Destino" ("\${targetLanguageName}").
     d.  Para cada una de estas ALTERNATIVAS ADICIONALES (si las hay):
         i.  "alternative_in_target_lang": Coloca la alternativa de traducción.
-        ii. "example_original_lang": Proporciona una frase de ejemplo CORTA Y CLARA en el "Idioma Detectado" que use el texto original o un concepto muy similar al que se refiere la alternativa.
-        iii. "example_target_lang": Proporciona la traducción de esa frase de ejemplo al "Idioma de Destino", asegurándote de que esta traducción utilice la ALTERNATIVA específica que estás ejemplificando.
+        ii. "example_original_lang": Proporciona una **FRASE DE EJEMPLO CORTA Y NATURAL DIFERENTE** en el "Idioma Detectado" que ilustre el uso del texto original o un concepto muy similar, en un contexto donde la alternativa de traducción (del paso 3.d.i) sería apropiada. **La frase debe ser más que solo la palabra o frase original.**
+        iii. "example_target_lang": Proporciona la traducción **EXACTA Y COMPLETA** de la "example_original_lang" (del paso 3.d.ii) al "Idioma de Destino", asegurándote de que esta traducción utilice la ALTERNATIVA específica que estás ejemplificando.
 4.  Formato de Salida: Devuelve ÚNICAMENTE un objeto JSON válido y bien formado con las siguientes claves:
     *   "detected_language_code": El código ISO 639-1 del "Idioma Detectado". (Ej: "es", "en")
     *   "translation": La "Traducción Principal" COMPLETA del texto original al "Idioma de Destino".
@@ -87,6 +88,24 @@ Sigue estos pasos estrictamente:
         *   Las entradas subsecuentes (si existen, máximo 2) son para las alternativas.
         *   Cada objeto debe tener: "alternative_in_target_lang", "example_original_lang", "example_target_lang".
 
+Ejemplo si el usuario escribe: "siento" (Detectado: Español) y targetLanguage es Inglés:
+{
+  "detected_language_code": "es",
+  "translation": "I feel",
+  "dictionary_entries": [
+    {
+      "alternative_in_target_lang": "I feel",
+      "example_original_lang": "A veces siento que necesito un descanso.",
+      "example_target_lang": "Sometimes I feel like I need a break."
+    },
+    {
+      "alternative_in_target_lang": "I'm sorry",
+      "example_original_lang": "Siento mucho tu pérdida.",
+      "example_target_lang": "I'm very sorry for your loss."
+    }
+  ]
+}
+
 Ejemplo si el usuario escribe: "hola como te ha ido el dia de hoy?" (Detectado: Español) y targetLanguage es Inglés:
 {
   "detected_language_code": "es",
@@ -94,24 +113,14 @@ Ejemplo si el usuario escribe: "hola como te ha ido el dia de hoy?" (Detectado: 
   "dictionary_entries": [
     {
       "alternative_in_target_lang": "hello, how has your day been today?",
-      "example_original_lang": "hola como te ha ido el dia de hoy?",
-      "example_target_lang": "hello, how has your day been today?"
+      "example_original_lang": "hola como te ha ido el dia de hoy? Espero que bien.",
+      "example_target_lang": "hello, how has your day been today? I hope it's been good."
     },
     {
-      "alternative_in_target_lang": "Hi, how was your day?",
-      "example_original_lang": "Qué tal tu día?",
-      "example_target_lang": "How was your day?"
+      "alternative_in_target_lang": "Hi, how's your day going?",
+      "example_original_lang": "Dime, ¿cómo te ha ido el día de hoy en el trabajo?",
+      "example_target_lang": "Tell me, how's your day going at work?"
     }
-  ]
-}
-
-Ejemplo si el usuario escribe "sin embargo" (Detectado: Español) y targetLanguage es Inglés:
-{
-  "detected_language_code": "es",
-  "translation": "however",
-  "dictionary_entries": [
-    {"alternative_in_target_lang": "however", "example_original_lang": "Es bueno; sin embargo, caro.", "example_target_lang": "It's good; however, expensive."},
-    {"alternative_in_target_lang": "nevertheless", "example_original_lang": "No estudió; sin embargo, aprobó.", "example_target_lang": "He didn't study; nevertheless, he passed."}
   ]
 }
 Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentarios o explicaciones fuera del objeto JSON. El JSON debe ser parseable directamente.`;
@@ -210,7 +219,8 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
       return;
     }
 
-    this.stopAudio();
+    this.wasManuallyStopped = false; 
+    this.stopAudio(); 
     this.ttsError = null;
 
     if (type === 'input') {
@@ -241,8 +251,12 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
 
     utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
       this.ngZone.run(() => {
-        console.error(`SpeechSynthesis Error (${type}):`, event.error);
-        this.displayError(`${UI_DEFAULTS.TTS_ERROR_GENERAL} (${event.error})`, 'TTS');
+        if (!this.wasManuallyStopped && event.error !== 'interrupted' && event.error !== 'canceled') {
+          console.error(`SpeechSynthesis Error (${type}):`, event.error);
+          this.displayError(`${UI_DEFAULTS.TTS_ERROR_GENERAL} (${event.error})`, 'TTS');
+        } else {
+          console.log(`SpeechSynthesis (${type}) fue interrumpido o cancelado. Evento:`, event.error);
+        }
         if (type === 'input') this.isSpeakingInput = false;
         else this.isSpeakingOutput = false;
 
@@ -436,6 +450,7 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
 
   stopAudio(): void {
     if (this.speechSynthesis && this.speechSynthesis.speaking) {
+      this.wasManuallyStopped = true;
       this.speechSynthesis.cancel();
     }
     if (this.isSpeakingInput) {
@@ -447,7 +462,7 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
   }
 
   private mapToBcp47(langCode: string): string {
-    if (!langCode) return 'en-US'; 
+    if (!langCode) return 'en-US';
     const map: { [key: string]: string } = {
       'en': 'en-US',
       'es': 'es-ES',
@@ -463,6 +478,7 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
     this.dictionaryEntries = [];
     this.detectedSourceLanguageDisplay = this.inputText.trim().length > 0 ? UI_DEFAULTS.DETECT_PROMPT : '';
     this.detectedSourceLanguageCode = '';
+    this.wasManuallyStopped = true;
     this.stopAudio();
     this.updateAvailableTargetLanguages();
   }
@@ -484,7 +500,7 @@ Asegúrate de que el JSON sea estrictamente válido. No incluyas texto, comentar
       this.ttsError = fullMessage;
     }
     this.isLoading = false;
-    this.isSpeakingInput = false; 
+    this.isSpeakingInput = false;
     this.isSpeakingOutput = false;
   }
 
