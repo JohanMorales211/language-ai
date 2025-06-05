@@ -8,7 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "build:gh": "ng build --configuration production --base-href /language-ai/",
-    "deploy": "ng deploy --base-href=/language-ai/"
+    "deploy": "ng build --configuration production --base-href /language-ai/ && npx angular-cli-ghpages --dir=dist/language-teacher"
   },
   "private": true,
   "dependencies": {
